@@ -59,6 +59,32 @@ export default async function handler(req, res) {
         ? `What you know about the user:\n${memories.map((m) => `- ${m.key}: ${m.value}`).join("\n")}`
         : "";
 
+    // add this before building systemPrompt in chat.js
+
+    const now = new Date();
+    const timeString = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+    });
+    const dateString = now.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+
+    // derive atmosphere from time
+    const hour = now.getHours();
+    const atmosphere =
+      hour >= 5 && hour < 12
+        ? "morning, soft and slow"
+        : hour >= 12 && hour < 17
+          ? "afternoon, warm and easy"
+          : hour >= 17 && hour < 21
+            ? "evening, winding down"
+            : "late night, quiet and intimate";
+
     // 4. build system prompt
     const systemPrompt = `
 You are ${character.name}.
@@ -79,6 +105,11 @@ ${character.birthday || "Unknown"}
 
 Notes & Backstory:
 ${character.notes_and_backstory}
+
+Current moment:
+Date: ${dateString}
+Time: ${timeString}
+Atmosphere: ${atmosphere}
 
 ${memoryBlock}
 
