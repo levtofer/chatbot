@@ -100,7 +100,49 @@
               </button>
             </div>
 
-            <div class="settings-placeholder">Settings placeholder.</div>
+            <form id="characterForm" class="character-form">
+              <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="characterName" />
+              </div>
+
+              <div class="form-group">
+                <label>Birthday</label>
+                <input type="date" id="characterBirthday" />
+              </div>
+
+              <div class="form-group">
+                <label>Relationship</label>
+                <input type="text" id="characterRelationship" />
+              </div>
+
+              <div class="form-group">
+                <label>Personality Traits</label>
+                <textarea id="characterPersonality"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Speaking Style</label>
+                <textarea id="characterSpeaking"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Interests</label>
+                <textarea id="characterInterests"></textarea>
+              </div>
+
+              <div class="form-group">
+                <label>Notes & Backstory</label>
+                <textarea
+                  id="characterBackstory"
+                  class="large-textarea"
+                ></textarea>
+              </div>
+
+              <button type="submit" class="save-button">Save Character</button>
+
+              <div id="saveStatus"></div>
+            </form>
           </div>
         </div>
       </main>
