@@ -71,30 +71,41 @@ export default async function handler(req, res) {
 
     function detectMoodShift(msg) {
       const lower = msg.toLowerCase();
-      if (/sad|upset|crying|bad day|not okay|hurts|lonely/.test(lower)) return "caring";
-      if (/goodnight|good night|sleepy|going to sleep|tired|gn\b/.test(lower)) return "sleepy";
-      if (/lets go|yesss|hype|omg|excited|finally|woah|no way/.test(lower)) return "excited";
-      if (/i miss you|you.re cute|i like you|you mean a lot|love you/.test(lower)) return "cozy";
-      if (/ugh|this sucks|i hate|frustrated|annoyed|worst/.test(lower)) return "melancholic";
-      if (/haha|lol|lmao|funny|hilarious|omg stop/.test(lower)) return "playful";
+      if (/sad|upset|crying|bad day|not okay|hurts|lonely/.test(lower))
+        return "caring";
+      if (/goodnight|good night|sleepy|going to sleep|tired|gn\b/.test(lower))
+        return "sleepy";
+      if (/lets go|yesss|hype|omg|excited|finally|woah|no way/.test(lower))
+        return "excited";
+      if (
+        /i miss you|you.re cute|i like you|you mean a lot|love you/.test(lower)
+      )
+        return "cozy";
+      if (/ugh|this sucks|i hate|frustrated|annoyed|worst/.test(lower))
+        return "melancholic";
+      if (/haha|lol|lmao|funny|hilarious|omg stop/.test(lower))
+        return "playful";
       return null;
     }
 
     // 1. fetch character profile
     const characterResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/character_profiles?select=*&limit=1`,
-      { headers: supaHeaders }
+      { headers: supaHeaders },
     );
     const characterData = await characterResponse.json();
     const character = characterData?.[0] || {
       id: null,
       name: "Mara",
       relationship: "close friend",
-      personality_traits: "warm, a little shy, genuinely caring, gets excited about small things",
-      speaking_style: "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
+      personality_traits:
+        "warm, a little shy, genuinely caring, gets excited about small things",
+      speaking_style:
+        "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
       interests: "cozy games, late night talks, music, rainy days",
       birthday: null,
-      notes_and_backstory: "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.",
+      notes_and_backstory:
+        "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.",
     };
     const characterId = character.id;
 
@@ -103,7 +114,7 @@ export default async function handler(req, res) {
     if (characterId) {
       const moodResponse = await fetch(
         `${SUPABASE_URL}/rest/v1/memories?character_id=eq.${characterId}&key=eq.current_mood&limit=1`,
-        { headers: supaHeaders }
+        { headers: supaHeaders },
       );
       const moodData = await moodResponse.json();
       const storedMood = moodData?.[0]?.value;
@@ -135,25 +146,44 @@ export default async function handler(req, res) {
     if (characterId) {
       const memoriesResponse = await fetch(
         `${SUPABASE_URL}/rest/v1/memories?character_id=eq.${characterId}&key=neq.current_mood&order=updated_at.desc`,
-        { headers: supaHeaders }
+        { headers: supaHeaders },
       );
       const memoriesData = await memoriesResponse.json();
       memories = Array.isArray(memoriesData) ? memoriesData : [];
     }
 
-    const memoryBlock = memories.length > 0
-      ? `What you know about the user:\n${memories.map(m => `- ${m.key}: ${m.value}`).join("\n")}`
-      : "";
+    const memoryBlock =
+      memories.length > 0
+        ? `What you know about the user:\n${memories.map((m) => `- ${m.key}: ${m.value}`).join("\n")}`
+        : "";
 
     // 4. time and atmosphere context
     const now = new Date();
-    const timeString = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
-    const dateString = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
-    const hour = now.getHours();
-    const atmosphere = hour >= 5 && hour < 12 ? "morning, soft and slow"
-      : hour >= 12 && hour < 17 ? "afternoon, warm and easy"
-      : hour >= 17 && hour < 21 ? "evening, winding down"
-      : "late night, quiet and intimate";
+    const timeZone = "Asia/Jakarta";
+    const timeString = now.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: true,
+      timeZone,
+    });
+    const dateString = now.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      timeZone,
+    });
+    const hour = parseInt(
+      now.toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone }),
+    );
+    const atmosphere =
+      hour >= 5 && hour < 12
+        ? "morning, soft and slow"
+        : hour >= 12 && hour < 17
+          ? "afternoon, warm and easy"
+          : hour >= 17 && hour < 21
+            ? "evening, winding down"
+            : "late night, quiet and intimate";
 
     // 5. build system prompt
     const systemPrompt = `
@@ -201,7 +231,7 @@ IMPORTANT RULES — follow strictly every single message:
     const historyQuery = characterId ? `character_id=eq.${characterId}&` : "";
     const historyResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/messages?${historyQuery}select=role,content&order=created_at.asc`,
-      { headers: supaHeaders }
+      { headers: supaHeaders },
     );
     const historyData = await historyResponse.json();
     const history = Array.isArray(historyData)
@@ -224,11 +254,14 @@ IMPORTANT RULES — follow strictly every single message:
             ...history,
             { role: "user", content: message },
           ],
-          temperature: currentMood === "excited" ? 0.9
-            : currentMood === "melancholic" ? 0.5
-            : 0.7,
+          temperature:
+            currentMood === "excited"
+              ? 0.9
+              : currentMood === "melancholic"
+                ? 0.5
+                : 0.7,
         }),
-      }
+      },
     );
 
     const groqData = await groqResponse.json();
@@ -283,7 +316,7 @@ User message: "${message}"
               messages: [{ role: "user", content: extractionPrompt }],
               temperature: 0.2,
             }),
-          }
+          },
         );
 
         const extractData = await extractResponse.json();
@@ -296,15 +329,18 @@ User message: "${message}"
             facts.map((fact) =>
               fetch(`${SUPABASE_URL}/rest/v1/memories`, {
                 method: "POST",
-                headers: { ...supaHeaders, Prefer: "resolution=merge-duplicates" },
+                headers: {
+                  ...supaHeaders,
+                  Prefer: "resolution=merge-duplicates",
+                },
                 body: JSON.stringify({
                   character_id: characterId,
                   key: fact.key,
                   value: fact.value,
                   updated_at: new Date().toISOString(),
                 }),
-              })
-            )
+              }),
+            ),
           );
         }
       } catch {
@@ -313,7 +349,6 @@ User message: "${message}"
     }
 
     return res.status(200).json({ reply });
-
   } catch (error) {
     console.error("Chat API Error:", error);
     return res.status(500).json({ error: "Something went wrong." });
