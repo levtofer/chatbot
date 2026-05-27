@@ -27,11 +27,17 @@ export default async function handler(req, res) {
 
     let fileBuffer = null;
     let fileType = "image/jpeg";
+    let characterId = null;
     let characterName = "character";
 
     for (const part of parts) {
+      if (part.includes('name="characterId"')) {
+        characterId =
+          part.split("\r\n\r\n")[1]?.split("\r\n")[0]?.trim() || null;
+      }
       if (part.includes('name="characterName"')) {
-        characterName = part.split("\r\n\r\n")[1]?.split("\r\n")[0]?.trim() || "character";
+        characterName =
+          part.split("\r\n\r\n")[1]?.split("\r\n")[0]?.trim() || "character";
       }
       if (part.includes('name="avatar"') && part.includes("Content-Type:")) {
         const ftMatch = part.match(/Content-Type: (.+)\r\n/);
@@ -46,7 +52,7 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: "No file found in request" });
     }
 
-    const fileName = `${characterName}-avatar`;
+    const fileName = `${characterId || "unknown"}-avatar`;
 
     // upload to Supabase Storage
     const uploadResponse = await fetch(
@@ -60,7 +66,7 @@ export default async function handler(req, res) {
           "x-upsert": "true",
         },
         body: fileBuffer,
-      }
+      },
     );
 
     if (!uploadResponse.ok) {
@@ -72,23 +78,9 @@ export default async function handler(req, res) {
     // build public URL
     const avatarUrl = `${SUPABASE_URL}/storage/v1/object/public/avatars/${fileName}`;
 
-    // save avatar_url to character_profiles
-    const profileResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/character_profiles?select=id&limit=1`,
-      {
-        headers: {
-          apikey: SUPABASE_KEY,
-          Authorization: `Bearer ${SUPABASE_KEY}`,
-        },
-      }
-    );
-
-    const profileData = await profileResponse.json();
-    const profileId = profileData?.[0]?.id;
-
-    if (profileId) {
+    if (characterId) {
       await fetch(
-        `${SUPABASE_URL}/rest/v1/character_profiles?id=eq.${profileId}`,
+        `${SUPABASE_URL}/rest/v1/character_profiles?id=eq.${characterId}`,
         {
           method: "PATCH",
           headers: {
@@ -98,12 +90,11 @@ export default async function handler(req, res) {
             Prefer: "return=minimal",
           },
           body: JSON.stringify({ avatar_url: avatarUrl }),
-        }
+        },
       );
     }
 
     return res.status(200).json({ avatarUrl });
-
   } catch (error) {
     console.error("Upload API error:", error);
     return res.status(500).json({ error: "Something went wrong" });

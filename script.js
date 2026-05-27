@@ -1,51 +1,51 @@
-const sidebar          = document.getElementById("sidebar");
-const sidebarList      = document.getElementById("sidebarList");
+const sidebar = document.getElementById("sidebar");
+const sidebarList = document.getElementById("sidebarList");
 const newCharacterButton = document.getElementById("newCharacterButton");
-const backButton       = document.getElementById("backButton");
+const backButton = document.getElementById("backButton");
 
-const shell            = document.getElementById("shell");
-const topbarAvatar     = document.getElementById("topbarAvatar");
-const aiName           = document.getElementById("aiName");
+const shell = document.getElementById("shell");
+const topbarAvatar = document.getElementById("topbarAvatar");
+const aiName = document.getElementById("aiName");
 const userAvatarButton = document.getElementById("userAvatarButton");
 
-const chatArea         = document.getElementById("chatArea");
-const messages         = document.getElementById("messages");
-const composer         = document.getElementById("composer");
-const messageInput     = document.getElementById("messageInput");
-const sendButton       = document.getElementById("sendButton");
+const chatArea = document.getElementById("chatArea");
+const messages = document.getElementById("messages");
+const composer = document.getElementById("composer");
+const messageInput = document.getElementById("messageInput");
+const sendButton = document.getElementById("sendButton");
 
-const profileButton    = document.getElementById("profileButton");
-const profilePanel     = document.getElementById("profilePanel");
+const profileButton = document.getElementById("profileButton");
+const profilePanel = document.getElementById("profilePanel");
 const closeProfileButton = document.getElementById("closeProfileButton");
-const userForm         = document.getElementById("userForm");
-const userDisplayName  = document.getElementById("userDisplayName");
-const userAvatar       = document.getElementById("userAvatar");
+const userForm = document.getElementById("userForm");
+const userDisplayName = document.getElementById("userDisplayName");
+const userAvatar = document.getElementById("userAvatar");
 const userAvatarPreview = document.getElementById("userAvatarPreview");
-const userAbout        = document.getElementById("userAbout");
-const userTimezone     = document.getElementById("userTimezone");
-const userSaveStatus   = document.getElementById("userSaveStatus");
+const userAbout = document.getElementById("userAbout");
+const userTimezone = document.getElementById("userTimezone");
+const userSaveStatus = document.getElementById("userSaveStatus");
 
-const characterPanel   = document.getElementById("characterPanel");
+const characterPanel = document.getElementById("characterPanel");
 const characterPanelTitle = document.getElementById("characterPanelTitle");
 const closeCharacterButton = document.getElementById("closeCharacterButton");
-const characterForm    = document.getElementById("characterForm");
-const characterId      = document.getElementById("characterId");
-const characterAvatar  = document.getElementById("characterAvatar");
-const avatarPreview    = document.getElementById("avatarPreview");
-const characterName    = document.getElementById("characterName");
+const characterForm = document.getElementById("characterForm");
+const characterId = document.getElementById("characterId");
+const characterAvatar = document.getElementById("characterAvatar");
+const avatarPreview = document.getElementById("avatarPreview");
+const characterName = document.getElementById("characterName");
 const characterBirthday = document.getElementById("characterBirthday");
 const characterRelationship = document.getElementById("characterRelationship");
 const characterPersonality = document.getElementById("characterPersonality");
 const characterSpeaking = document.getElementById("characterSpeaking");
 const characterInterests = document.getElementById("characterInterests");
 const characterBackstory = document.getElementById("characterBackstory");
-const saveStatus       = document.getElementById("saveStatus");
+const saveStatus = document.getElementById("saveStatus");
 
 // ── STATE ─────────────────────────────────────────────
-let currentCharacterId   = null;
+let currentCharacterId = null;
 let currentCharacterName = "Mara";
 let currentCharacterAvatar = null;
-let isMobile             = window.innerWidth <= 768;
+let isMobile = window.innerWidth <= 768;
 
 marked.setOptions({ breaks: true });
 
@@ -103,7 +103,9 @@ function closePanel(panel) {
 
 profileButton.addEventListener("click", () => openPanel(profilePanel));
 closeProfileButton.addEventListener("click", () => closePanel(profilePanel));
-profilePanel.addEventListener("click", (e) => { if (e.target === profilePanel) closePanel(profilePanel); });
+profilePanel.addEventListener("click", (e) => {
+  if (e.target === profilePanel) closePanel(profilePanel);
+});
 
 newCharacterButton.addEventListener("click", () => {
   characterPanelTitle.textContent = "New Character";
@@ -114,8 +116,12 @@ newCharacterButton.addEventListener("click", () => {
   openPanel(characterPanel);
 });
 
-closeCharacterButton.addEventListener("click", () => closePanel(characterPanel));
-characterPanel.addEventListener("click", (e) => { if (e.target === characterPanel) closePanel(characterPanel); });
+closeCharacterButton.addEventListener("click", () =>
+  closePanel(characterPanel),
+);
+characterPanel.addEventListener("click", (e) => {
+  if (e.target === characterPanel) closePanel(characterPanel);
+});
 
 // ── SIDEBAR LIST ──────────────────────────────────────
 async function loadSidebar() {
@@ -128,7 +134,8 @@ async function loadSidebar() {
 
     characters.forEach((char) => {
       const row = document.createElement("div");
-      row.className = "sidebar-row" + (char.id === currentCharacterId ? " active" : "");
+      row.className =
+        "sidebar-row" + (char.id === currentCharacterId ? " active" : "");
       row.dataset.id = char.id;
 
       const avatarEl = document.createElement("div");
@@ -144,7 +151,9 @@ async function loadSidebar() {
 
       const preview = document.createElement("div");
       preview.className = "sidebar-row-preview";
-      preview.textContent = truncate(char.last_message || char.relationship || "");
+      preview.textContent = truncate(
+        char.last_message || char.relationship || "",
+      );
 
       info.appendChild(name);
       info.appendChild(preview);
@@ -161,7 +170,7 @@ async function loadSidebar() {
 
 // ── SELECT CHARACTER ──────────────────────────────────
 async function selectCharacter(char) {
-  currentCharacterId   = char.id;
+  currentCharacterId = char.id;
   currentCharacterName = char.name || "Mara";
   currentCharacterAvatar = char.avatar_url || null;
 
@@ -199,7 +208,8 @@ function addMessage(text, sender) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = sender === "user" ? "You • just now" : `${currentCharacterName} • just now`;
+  meta.textContent =
+    sender === "user" ? "You • just now" : `${currentCharacterName} • just now`;
   bubble.appendChild(meta);
 
   row.appendChild(bubble);
@@ -256,8 +266,8 @@ async function loadUserProfile() {
     if (!user) return;
 
     userDisplayName.value = user.display_name || "";
-    userAbout.value       = user.about || "";
-    userTimezone.value    = user.timezone || "Asia/Jakarta";
+    userAbout.value = user.about || "";
+    userTimezone.value = user.timezone || "Asia/Jakarta";
 
     const FALLBACK_URL = `${location.origin}/api/avatar-fallback`;
     const avatarSrc = user.avatar_url || null;
@@ -291,7 +301,10 @@ userForm.addEventListener("submit", async (e) => {
       const formData = new FormData();
       formData.append("avatar", avatarFile);
       formData.append("characterName", "user");
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
       const uploadData = await uploadRes.json();
       avatarUrl = uploadData.avatarUrl || null;
     }
@@ -339,7 +352,14 @@ characterForm.addEventListener("submit", async (e) => {
       const formData = new FormData();
       formData.append("avatar", avatarFile);
       formData.append("characterName", characterName.value || "character");
-      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+
+      if (characterId.value) {
+        formData.append("characterId", characterId.value);
+      }
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
       const uploadData = await uploadRes.json();
       avatarUrl = uploadData.avatarUrl || null;
     }
