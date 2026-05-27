@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Companion — Phase 1</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="app">
+      <main class="shell" aria-label="AI companion chat shell">
+        <header class="topbar">
+          <div class="brand">
+            <div class="brand-name" id="aiName">Aster</div>
+            <div class="brand-subtitle">Personal companion • Phase 1</div>
+          </div>
+          <button
+            class="icon-button"
+            id="settingsButton"
+            aria-label="Open settings"
+            aria-expanded="false"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.8"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3"></circle>
+              <path
+                d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+              ></path>
+            </svg>
+          </button>
+        </header>
+        <section class="chat-wrap">
+          <div
+            class="chat-area"
+            id="chatArea"
+            aria-live="polite"
+            aria-label="Chat messages"
+          >
+            <div class="messages" id="messages">
+              <div class="message-row ai">
+                <div class="bubble">
+                  Hello. I am Aster. This is the Phase 1 static chat shell.
+                  <div class="meta">Just now</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+            <div class="settings-card">
+              <div class="settings-header">
+                <h2 class="settings-title">Settings</h2>
+                <button
+                  class="icon-button"
+                  id="closeSettingsButton"
+                  aria-label="Close settings"
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    aria-hidden="true"
+                  >
+                    <circle cx="12" cy="12" r="3"></circle>
+                    <path
+                      d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09a1.65 1.65 0 0 0-1-1.51 1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09a1.65 1.65 0 0 0 1.51-1 1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33 1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82 1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                    ></path>
+                  </svg>
+                </button>
+              </div>
+              <div class="settings-placeholder">
+                Settings placeholder. Add character, theme, memory, and model
+                controls here in later phases.
+              </div>
+            </div>
+          </div>
+        </section>
+        <form class="composer" id="composer" autocomplete="off">
+          <div class="composer-inner">
+            <input
+              class="input"
+              id="messageInput"
+              type="text"
+              placeholder="Type a message..."
+              aria-label="Message input"
+            />
+            <button class="send-button" id="sendButton" type="submit">
+              Send
+            </button>
+          </div>
+        </form>
+      </main>
+    </div>
+    <script src="script.js" defer></script>
+  </body>
+</html>
