@@ -4,7 +4,7 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { message } = req.body || {};
+    const { message, character_id } = req.body || {};
 
     if (!message || typeof message !== "string") {
       return res.status(400).json({ error: "Message is required" });
@@ -89,24 +89,37 @@ export default async function handler(req, res) {
     }
 
     // 1. fetch character profile
-    const characterResponse = await fetch(
-      `${SUPABASE_URL}/rest/v1/character_profiles?select=*&limit=1`,
-      { headers: supaHeaders },
-    );
-    const characterData = await characterResponse.json();
-    const character = characterData?.[0] || {
-      id: null,
-      name: "Mara",
-      relationship: "close friend",
-      personality_traits:
-        "warm, a little shy, genuinely caring, gets excited about small things",
-      speaking_style:
-        "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
-      interests: "cozy games, late night talks, music, rainy days",
-      birthday: null,
-      notes_and_backstory:
-        "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.",
-    };
+    const { character_id } = req.body || {};
+
+    let character = null;
+
+    if (character_id) {
+      const characterResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/character_profiles?id=eq.${character_id}&select=*&limit=1`,
+        { headers: supaHeaders },
+      );
+
+      const characterData = await characterResponse.json();
+      character = characterData?.[0] || null;
+    }
+
+    // fallback character
+    if (!character) {
+      character = {
+        id: null,
+        name: "Mara",
+        relationship: "close friend",
+        personality_traits:
+          "warm, a little shy, genuinely caring, gets excited about small things",
+        speaking_style:
+          "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
+        interests: "cozy games, late night talks, music, rainy days",
+        birthday: null,
+        notes_and_backstory:
+          "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.",
+      };
+    }
+
     const characterId = character.id;
 
     // 2. load or initialize mood
