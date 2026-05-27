@@ -173,12 +173,14 @@ export default async function handler(req, res) {
     // 4. time and atmosphere context
     const now = new Date();
     const timeZone = "Asia/Jakarta";
+
     const timeString = now.toLocaleTimeString("en-US", {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: true,
+      hour12: false, // 24-hour format
       timeZone,
     });
+
     const dateString = now.toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
@@ -186,8 +188,13 @@ export default async function handler(req, res) {
       day: "numeric",
       timeZone,
     });
+
     const hour = parseInt(
-      now.toLocaleString("en-US", { hour: "numeric", hour12: false, timeZone }),
+      now.toLocaleString("en-US", {
+        hour: "numeric",
+        hour12: false,
+        timeZone,
+      }),
     );
     const atmosphere =
       hour >= 5 && hour < 12
