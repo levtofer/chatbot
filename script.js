@@ -76,10 +76,25 @@ async function loadCharacter() {
     characterInterests.value = character.interests || "";
 
     characterBackstory.value = character.notes_and_backstory || "";
+
+    if (character.avatar_url) {
+      const topbarAvatar = document.getElementById("topbarAvatar");
+      topbarAvatar.src = character.avatar_url;
+      topbarAvatar.style.display = "block";
+    }
   } catch (error) {
     console.error(error);
   }
 }
+
+// preview avatar when file selected
+document.getElementById("characterAvatar").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const preview = document.getElementById("avatarPreview");
+  preview.src = URL.createObjectURL(file);
+  preview.style.display = "block";
+});
 
 characterForm.addEventListener("submit", async (event) => {
   event.preventDefault();
@@ -110,6 +125,22 @@ characterForm.addEventListener("submit", async (event) => {
     aiName.textContent = characterName.value || "Mara";
     currentCharacterName = characterName.value || "Mara";
     saveStatus.textContent = "Character saved successfully.";
+    const avatarFile = document.getElementById("characterAvatar").files[0];
+    if (avatarFile) {
+      const formData = new FormData();
+      formData.append("avatar", avatarFile);
+      formData.append("characterName", characterName.value || "character");
+      const uploadRes = await fetch("/api/upload", {
+        method: "POST",
+        body: formData,
+      });
+      const uploadData = await uploadRes.json();
+      if (uploadData.avatarUrl) {
+        const topbarAvatar = document.getElementById("topbarAvatar");
+        topbarAvatar.src = uploadData.avatarUrl;
+        topbarAvatar.style.display = "block";
+      }
+    }
     closeSettings();
   } catch (error) {
     console.error(error);
@@ -134,6 +165,17 @@ function addMessage(text, sender) {
   bubble.appendChild(meta);
   row.appendChild(bubble);
   messages.appendChild(row);
+
+  if (sender === "ai") {
+    const avatar = document.getElementById("topbarAvatar");
+    if (avatar.src && avatar.style.display !== "none") {
+      const img = document.createElement("img");
+      img.src = avatar.src;
+      img.style.cssText =
+        "width:28px;height:28px;border-radius:50%;object-fit:cover;align-self:flex-end;flex-shrink:0;";
+      row.prepend(img);
+    }
+  }
 
   scrollToBottom();
 

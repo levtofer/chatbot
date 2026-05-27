@@ -18,6 +18,18 @@
       <main class="shell" aria-label="AI companion chat shell">
         <header class="topbar">
           <div class="brand">
+            <img
+              id="topbarAvatar"
+              src=""
+              alt=""
+              style="
+                display: none;
+                width: 36px;
+                height: 36px;
+                border-radius: 50%;
+                object-fit: cover;
+              "
+            />
             <div class="brand-name" id="aiName">Mara</div>
             <div class="brand-subtitle">Personal companion</div>
           </div>
@@ -104,6 +116,22 @@
               <div class="form-group">
                 <label>Name</label>
                 <input type="text" id="characterName" />
+              </div>
+
+              <div class="form-group">
+                <label>Avatar</label>
+                <input type="file" id="characterAvatar" accept="image/*" />
+                <img
+                  id="avatarPreview"
+                  style="
+                    display: none;
+                    width: 64px;
+                    height: 64px;
+                    border-radius: 50%;
+                    margin-top: 8px;
+                    object-fit: cover;
+                  "
+                />
               </div>
 
               <div class="form-group">
