@@ -45,7 +45,19 @@ async function loadCharacter() {
 
     const character = data.character;
 
-    if (!character) return;
+    if (!character) {
+      characterName.value = "Mara";
+      characterRelationship.value = "close friend";
+      characterPersonality.value =
+        "warm, a little shy, genuinely caring, gets excited about small things";
+      characterSpeaking.value =
+        "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis";
+      characterInterests.value =
+        "cozy games, late night talks, music, rainy days";
+      characterBackstory.value =
+        "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere.";
+      return;
+    }
 
     aiName.textContent = character.name || "Mara";
 
@@ -96,8 +108,9 @@ characterForm.addEventListener("submit", async (event) => {
     }
 
     aiName.textContent = characterName.value || "Mara";
-
+    currentCharacterName = characterName.value || "Mara";
     saveStatus.textContent = "Character saved successfully.";
+    closeSettings();
   } catch (error) {
     console.error(error);
 
@@ -115,7 +128,8 @@ function addMessage(text, sender) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = sender === "user" ? "You • just now" : `${currentCharacterName} • just now`;
+  meta.textContent =
+    sender === "user" ? "You • just now" : `${currentCharacterName} • just now`;
 
   bubble.appendChild(meta);
   row.appendChild(bubble);
@@ -158,6 +172,13 @@ messageInput.addEventListener("input", () => {
 
   messageInput.style.height = "auto";
   messageInput.style.height = `${messageInput.scrollHeight}px`;
+});
+
+document.querySelectorAll(".form-group textarea").forEach((textarea) => {
+  textarea.addEventListener("input", () => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${textarea.scrollHeight}px`;
+  });
 });
 
 function createTypingIndicator() {

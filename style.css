@@ -276,17 +276,17 @@ textarea.input {
   }
 
   .input::-webkit-scrollbar-thumb {
-    background: rgba(255,255,255,0.14);
+    background: rgba(255, 255, 255, 0.14);
     border-radius: 999px;
   }
 
   .input::-webkit-scrollbar-thumb:hover {
-    background: rgba(255,255,255,0.22);
+    background: rgba(255, 255, 255, 0.22);
   }
 
   .input {
     scrollbar-width: thin;
-    scrollbar-color: rgba(255,255,255,0.16) transparent;
+    scrollbar-color: rgba(255, 255, 255, 0.16) transparent;
   }
 }
 
@@ -306,6 +306,43 @@ textarea.input {
   gap: 18px;
   overflow-y: auto;
   padding-right: 4px;
+  max-height: calc(100vh - 120px);
+}
+
+/* character form scrollbar — desktop only */
+@media (min-width: 769px) {
+  .character-form::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  .character-form::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .character-form::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 999px;
+  }
+
+  .character-form::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .character-form {
+    scrollbar-width: large;
+    scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  }
+}
+
+/* hide on mobile */
+@media (max-width: 768px) {
+  .character-form {
+    scrollbar-width: none;
+  }
+
+  .character-form::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 .form-group {
@@ -323,7 +360,7 @@ textarea.input {
 .form-group textarea {
   width: 100%;
   border: 1px solid var(--border);
-  background: rgba(255,255,255,0.03);
+  background: rgba(255, 255, 255, 0.03);
   color: var(--text);
   border-radius: 14px;
   padding: 12px;
@@ -331,12 +368,15 @@ textarea.input {
 }
 
 .form-group textarea {
-  resize: vertical;
+  resize: none;
+  overflow: hidden;
   min-height: 90px;
 }
 
 .large-textarea {
   min-height: 220px;
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 .save-button {
