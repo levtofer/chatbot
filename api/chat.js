@@ -155,6 +155,14 @@ If there are facts worth saving, respond ONLY with a JSON array like this:
 
 If nothing is worth saving, respond with exactly: []
 
+NOT worth saving: anything about the AI,
+AI opinions, AI interests, AI reactions,
+fictional details, casual replies, greetings.
+
+Only extract facts about the HUMAN USER from this message.
+Ignore anything that sounds like the AI's personality, interests, or opinions.
+Only save facts the user stated about themselves.
+
 User message: "${message}"
       `.trim();
 
