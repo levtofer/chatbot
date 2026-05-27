@@ -19,8 +19,9 @@
         <header class="topbar">
           <div class="brand">
             <div class="brand-name" id="aiName">Aster</div>
-            <div class="brand-subtitle">Personal companion • Phase 1</div>
+            <div class="brand-subtitle">Personal companion</div>
           </div>
+
           <button
             class="icon-button"
             id="settingsButton"
@@ -43,6 +44,7 @@
             </svg>
           </button>
         </header>
+
         <section class="chat-wrap">
           <div
             class="chat-area"
@@ -50,57 +52,57 @@
             aria-live="polite"
             aria-label="Chat messages"
           >
-            <div class="messages" id="messages">
-              <div class="messages" id="messages"></div>
-            </div>
-          </div>
-          <div class="settings-panel" id="settingsPanel" aria-hidden="true">
-            <div class="settings-card">
-              <div class="settings-header">
-                <h2 class="settings-title">Settings</h2>
-                <button
-                  class="icon-button"
-                  id="closeSettingsButton"
-                  aria-label="Close settings"
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    width="24"
-                    height="24"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-              <div class="settings-placeholder">
-                Settings placeholder. Add character, theme, memory, and model
-                controls here in later phases.
-              </div>
-            </div>
+            <div class="messages" id="messages"></div>
           </div>
         </section>
+
         <form class="composer" id="composer" autocomplete="off">
           <div class="composer-inner">
             <textarea
               class="input"
               id="messageInput"
-              placeholder="Type a message..."
               rows="1"
+              placeholder="Type a message..."
               aria-label="Message input"
             ></textarea>
+
             <button class="send-button" id="sendButton" type="submit">
               Send
             </button>
           </div>
         </form>
+
+        <div class="settings-panel" id="settingsPanel" aria-hidden="true">
+          <div class="settings-card">
+            <div class="settings-header">
+              <h2 class="settings-title">Settings</h2>
+
+              <button
+                class="icon-button"
+                id="closeSettingsButton"
+                aria-label="Close settings"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="24"
+                  height="24"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+            </div>
+
+            <div class="settings-placeholder">Settings placeholder.</div>
+          </div>
+        </div>
       </main>
     </div>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
