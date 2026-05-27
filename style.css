@@ -103,6 +103,7 @@ input {
 }
 .message-row {
   display: flex;
+  gap: 10px;
 }
 .message-row.user {
   justify-content: flex-end;
