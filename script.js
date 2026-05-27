@@ -19,6 +19,8 @@ const characterInterests = document.getElementById("characterInterests");
 const characterBackstory = document.getElementById("characterBackstory");
 const saveStatus = document.getElementById("saveStatus");
 
+let currentCharacterName = "Mara"; // default fallback
+
 marked.setOptions({
   breaks: true,
 });
@@ -46,6 +48,8 @@ async function loadCharacter() {
     if (!character) return;
 
     aiName.textContent = character.name || "Mara";
+
+    currentCharacterName = character.name || "Mara";
 
     characterName.value = character.name || "";
 
@@ -111,7 +115,7 @@ function addMessage(text, sender) {
 
   const meta = document.createElement("div");
   meta.className = "meta";
-  meta.textContent = sender === "user" ? "You • just now" : "Aster • just now";
+  meta.textContent = sender === "user" ? "You • just now" : `${currentCharacterName} • just now`;
 
   bubble.appendChild(meta);
   row.appendChild(bubble);
@@ -164,7 +168,7 @@ function createTypingIndicator() {
   const bubble = document.createElement("div");
   bubble.className = "bubble";
 
-  bubble.textContent = "Aster is typing...";
+  bubble.textContent = `${currentCharacterName} is typing...`;
 
   row.appendChild(bubble);
   messages.appendChild(row);
