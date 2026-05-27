@@ -1,97 +1,126 @@
 export default async function handler(req, res) {
-  const baseUrl = `${process.env.SUPABASE_URL}/rest/v1/character_profiles`;
+  const SUPABASE_URL = process.env.SUPABASE_URL;
+  const SUPABASE_KEY = process.env.SUPABASE_ANON_KEY;
 
-  try {
-    // GET CHARACTER
-    if (req.method === 'GET') {
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: `Bearer ${SUPABASE_KEY}`,
+    "Content-Type": "application/json",
+  };
+
+  // GET — fetch all characters (for sidebar) or single character
+  if (req.method === "GET") {
+    try {
+      const { all, id } = req.query;
+
+      if (all === "true") {
+        // fetch all characters for sidebar
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/character_profiles?select=*&order=updated_at.desc`,
+          { headers }
+        );
+        const characters = await response.json();
+
+        // for each character, fetch their last message
+        const withLastMessage = await Promise.all(
+          (Array.isArray(characters) ? characters : []).map(async (char) => {
+            const msgRes = await fetch(
+              `${SUPABASE_URL}/rest/v1/messages?character_id=eq.${char.id}&order=created_at.desc&limit=1&select=content,role`,
+              { headers }
+            );
+            const msgData = await msgRes.json();
+            const lastMsg = msgData?.[0];
+            return {
+              ...char,
+              last_message: lastMsg
+                ? (lastMsg.role === "user" ? "You: " : "") + lastMsg.content
+                : null,
+            };
+          })
+        );
+
+        return res.status(200).json({ characters: withLastMessage });
+      }
+
+      if (id) {
+        // fetch single character by id
+        const response = await fetch(
+          `${SUPABASE_URL}/rest/v1/character_profiles?id=eq.${id}&select=*&limit=1`,
+          { headers }
+        );
+        const data = await response.json();
+        return res.status(200).json({ character: data?.[0] || null });
+      }
+
+      // fallback: fetch first character (backwards compat)
       const response = await fetch(
-        `${baseUrl}?select=*&&limit=1`,
-        {
-          headers: {
-            apikey: process.env.SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
+        `${SUPABASE_URL}/rest/v1/character_profiles?select=*&limit=1`,
+        { headers }
       );
-
       const data = await response.json();
+      return res.status(200).json({ character: data?.[0] || null });
 
-      if (!response.ok) {
-        return res.status(500).json({
-          error: 'Failed to fetch character'
-        });
-      }
-
-      return res.status(200).json({
-        character: data[0] || null
-      });
+    } catch (error) {
+      console.error("Character GET error:", error);
+      return res.status(500).json({ error: "Failed to load character" });
     }
-
-    // SAVE / UPSERT CHARACTER
-    if (req.method === 'POST') {
-      const character = req.body;
-
-      // fetch existing row
-      const existingResponse = await fetch(
-        `${baseUrl}?select=id&limit=1`,
-        {
-          headers: {
-            apikey: process.env.SUPABASE_ANON_KEY,
-            Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-
-      const existingData = await existingResponse.json();
-
-      const existingId = existingData?.[0]?.id;
-
-      const payload = existingId
-        ? {
-            id: existingId,
-            ...character,
-            updated_at: new Date().toISOString()
-          }
-        : {
-            ...character,
-            updated_at: new Date().toISOString()
-          };
-
-      const saveResponse = await fetch(baseUrl, {
-        method: 'POST',
-        headers: {
-          apikey: process.env.SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${process.env.SUPABASE_ANON_KEY}`,
-          'Content-Type': 'application/json',
-          Prefer: 'resolution=merge-duplicates'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!saveResponse.ok) {
-        const error = await saveResponse.text();
-
-        return res.status(500).json({
-          error
-        });
-      }
-
-      return res.status(200).json({
-        success: true
-      });
-    }
-
-    return res.status(405).json({
-      error: 'Method not allowed'
-    });
-
-  } catch (error) {
-    console.error(error);
-
-    return res.status(500).json({
-      error: 'Something went wrong'
-    });
   }
+
+  // POST — create or update character
+  if (req.method === "POST") {
+    const {
+      id,
+      name,
+      birthday,
+      relationship,
+      personality_traits,
+      speaking_style,
+      interests,
+      notes_and_backstory,
+      avatar_url,
+    } = req.body || {};
+
+    try {
+      const payload = {
+        name,
+        birthday: birthday || null,
+        relationship,
+        personality_traits,
+        speaking_style,
+        interests,
+        notes_and_backstory,
+        updated_at: new Date().toISOString(),
+      };
+      if (avatar_url) payload.avatar_url = avatar_url;
+
+      if (id) {
+        // update existing
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/character_profiles?id=eq.${id}`,
+          {
+            method: "PATCH",
+            headers: { ...headers, Prefer: "return=minimal" },
+            body: JSON.stringify(payload),
+          }
+        );
+      } else {
+        // insert new
+        await fetch(
+          `${SUPABASE_URL}/rest/v1/character_profiles`,
+          {
+            method: "POST",
+            headers: { ...headers, Prefer: "return=minimal" },
+            body: JSON.stringify(payload),
+          }
+        );
+      }
+
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error("Character POST error:", error);
+      return res.status(500).json({ error: "Failed to save character" });
+    }
+  }
+
+  return res.status(405).json({ error: "Method not allowed" });
 }
