@@ -72,6 +72,20 @@ async function loadHistory() {
   }
 }
 
+messageInput.addEventListener('keydown', async (event) => {
+  if (event.key === 'Enter' && !event.shiftKey) {
+    event.preventDefault();
+    composer.requestSubmit();
+  }
+});
+
+messageInput.addEventListener('input', () => {
+  sendButton.disabled = !messageInput.value.trim();
+
+  messageInput.style.height = 'auto';
+  messageInput.style.height = `${messageInput.scrollHeight}px`;
+});
+
 function createTypingIndicator() {
   const row = document.createElement('div');
   row.className = 'message-row ai';
@@ -116,6 +130,7 @@ composer.addEventListener('submit', async (event) => {
   addMessage(text, 'user');
 
   messageInput.value = '';
+  messageInput.style.height = 'auto';
   sendButton.disabled = true;
 
   createTypingIndicator();
