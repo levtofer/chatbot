@@ -8,6 +8,10 @@ const messages = document.getElementById('messages');
 const chatArea = document.getElementById('chatArea');
 const sendButton = document.getElementById('sendButton');
 
+marked.setOptions({
+  breaks: true
+});
+
 function scrollToBottom() {
   chatArea.scrollTop = chatArea.scrollHeight;
 }
@@ -26,7 +30,7 @@ function addMessage(text, sender) {
 
   const bubble = document.createElement('div');
   bubble.className = 'bubble';
-  bubble.textContent = text;
+  bubble.innerHTML = marked.parse(text);
 
   const meta = document.createElement('div');
   meta.className = 'meta';
