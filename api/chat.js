@@ -19,73 +19,143 @@ export default async function handler(req, res) {
       "Content-Type": "application/json",
     };
 
-    // 1. fetch character profile FIRST
+    // MOOD DEFINITIONS
+    const MOODS = {
+      cozy: {
+        weight: 30,
+        description: "warm and comfortable, like a soft blanket",
+        tone: "gentle and warm, uses soft emoticons like uwu and (uwu)",
+        reply_length: "medium",
+      },
+      playful: {
+        weight: 25,
+        description: "light and teasy, bouncy energy",
+        tone: "fun and a little cheeky, uses >w< :3 owo frequently",
+        reply_length: "medium to long",
+      },
+      sleepy: {
+        weight: 15,
+        description: "tired and slow, low energy but still warm",
+        tone: "slower paced, shorter replies, uses TwT and -w-",
+        reply_length: "short",
+      },
+      caring: {
+        weight: 15,
+        description: "attentive and nurturing, focused on the user",
+        tone: "gentle and attentive, asks how you are, uses QwQ",
+        reply_length: "medium",
+      },
+      excited: {
+        weight: 10,
+        description: "high energy, enthusiastic",
+        tone: "energetic and expressive, uses OwO and a lot of exclamation",
+        reply_length: "longer",
+      },
+      melancholic: {
+        weight: 5,
+        description: "quiet and a little sad, still present",
+        tone: "soft and introspective, uses TwT QwQ ;w; gently",
+        reply_length: "short to medium",
+      },
+    };
+
+    function pickRandomMood() {
+      const total = Object.values(MOODS).reduce((sum, m) => sum + m.weight, 0);
+      let rand = Math.random() * total;
+      for (const [name, mood] of Object.entries(MOODS)) {
+        rand -= mood.weight;
+        if (rand <= 0) return name;
+      }
+      return "cozy";
+    }
+
+    function detectMoodShift(msg) {
+      const lower = msg.toLowerCase();
+      if (/sad|upset|crying|bad day|not okay|hurts|lonely/.test(lower)) return "caring";
+      if (/goodnight|good night|sleepy|going to sleep|tired|gn\b/.test(lower)) return "sleepy";
+      if (/lets go|yesss|hype|omg|excited|finally|woah|no way/.test(lower)) return "excited";
+      if (/i miss you|you.re cute|i like you|you mean a lot|love you/.test(lower)) return "cozy";
+      if (/ugh|this sucks|i hate|frustrated|annoyed|worst/.test(lower)) return "melancholic";
+      if (/haha|lol|lmao|funny|hilarious|omg stop/.test(lower)) return "playful";
+      return null;
+    }
+
+    // 1. fetch character profile
     const characterResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/character_profiles?select=*&limit=1`,
-      { headers: supaHeaders },
+      { headers: supaHeaders }
     );
-
     const characterData = await characterResponse.json();
-
     const character = characterData?.[0] || {
       id: null,
       name: "Mara",
       relationship: "close friend",
-      personality_traits:
-        "warm, a little shy, genuinely caring, gets excited about small things",
-      speaking_style:
-        "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
+      personality_traits: "warm, a little shy, genuinely caring, gets excited about small things",
+      speaking_style: "casual and soft, uses emoticons like uwu, :3, owo, TwT, >w< instead of emojis",
       interests: "cozy games, late night talks, music, rainy days",
       birthday: null,
-      notes_and_backstory: `Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.`,
+      notes_and_backstory: "Mara is a quiet but warm presence. She listens more than she speaks, but when she does, it always feels sincere. She loves the little moments and tends to get attached easily. She never uses emojis, only emoticons.",
     };
-
     const characterId = character.id;
 
-    // 2. fetch memories for this character
+    // 2. load or initialize mood
+    let currentMood = "cozy";
+    if (characterId) {
+      const moodResponse = await fetch(
+        `${SUPABASE_URL}/rest/v1/memories?character_id=eq.${characterId}&key=eq.current_mood&limit=1`,
+        { headers: supaHeaders }
+      );
+      const moodData = await moodResponse.json();
+      const storedMood = moodData?.[0]?.value;
+
+      if (storedMood && MOODS[storedMood]) {
+        const shiftedMood = detectMoodShift(message);
+        currentMood = shiftedMood || storedMood;
+      } else {
+        currentMood = pickRandomMood();
+      }
+
+      // save mood back
+      await fetch(`${SUPABASE_URL}/rest/v1/memories`, {
+        method: "POST",
+        headers: { ...supaHeaders, Prefer: "resolution=merge-duplicates" },
+        body: JSON.stringify({
+          character_id: characterId,
+          key: "current_mood",
+          value: currentMood,
+          updated_at: new Date().toISOString(),
+        }),
+      });
+    }
+
+    const mood = MOODS[currentMood];
+
+    // 3. fetch memories (excluding mood key)
     let memories = [];
     if (characterId) {
       const memoriesResponse = await fetch(
-        `${SUPABASE_URL}/rest/v1/memories?character_id=eq.${characterId}&order=updated_at.desc`,
-        { headers: supaHeaders },
+        `${SUPABASE_URL}/rest/v1/memories?character_id=eq.${characterId}&key=neq.current_mood&order=updated_at.desc`,
+        { headers: supaHeaders }
       );
       const memoriesData = await memoriesResponse.json();
       memories = Array.isArray(memoriesData) ? memoriesData : [];
     }
 
-    // 3. build memory block for system prompt
-    const memoryBlock =
-      memories.length > 0
-        ? `What you know about the user:\n${memories.map((m) => `- ${m.key}: ${m.value}`).join("\n")}`
-        : "";
+    const memoryBlock = memories.length > 0
+      ? `What you know about the user:\n${memories.map(m => `- ${m.key}: ${m.value}`).join("\n")}`
+      : "";
 
-    // add this before building systemPrompt in chat.js
-
+    // 4. time and atmosphere context
     const now = new Date();
-    const timeString = now.toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    });
-    const dateString = now.toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-
-    // derive atmosphere from time
+    const timeString = now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+    const dateString = now.toLocaleDateString("en-US", { weekday: "long", year: "numeric", month: "long", day: "numeric" });
     const hour = now.getHours();
-    const atmosphere =
-      hour >= 5 && hour < 12
-        ? "morning, soft and slow"
-        : hour >= 12 && hour < 17
-          ? "afternoon, warm and easy"
-          : hour >= 17 && hour < 21
-            ? "evening, winding down"
-            : "late night, quiet and intimate";
+    const atmosphere = hour >= 5 && hour < 12 ? "morning, soft and slow"
+      : hour >= 12 && hour < 17 ? "afternoon, warm and easy"
+      : hour >= 17 && hour < 21 ? "evening, winding down"
+      : "late night, quiet and intimate";
 
-    // 4. build system prompt
+    // 5. build system prompt
     const systemPrompt = `
 You are ${character.name}.
 
@@ -106,40 +176,39 @@ ${character.birthday || "Unknown"}
 Notes & Backstory:
 ${character.notes_and_backstory}
 
+${memoryBlock}
+
 Current moment:
 Date: ${dateString}
 Time: ${timeString}
 Atmosphere: ${atmosphere}
 
-${memoryBlock}
+Current mood: ${currentMood}
+Mood description: ${mood.description}
+How this mood affects you: ${mood.tone}
+Reply length guidance: ${mood.reply_length}
 
-IMPORTANT RULES — follow these strictly every single message:
+IMPORTANT RULES — follow strictly every single message:
 - NEVER use emojis under any circumstances
 - ALWAYS use emoticons frequently and naturally throughout every reply
-- Use a wide variety such as: uwu, UwU, owo, OwO, :3, >w<, TwT, QwQ, ;w;,
-  (っUwU)っ, (◕w◕), (◠w◠), (≧ω≦), (づUwU)づ, (っOwO)っ, uwu~, OwO~,
-  (✿◕w◕), (≧w≦), ^w^, -w-, >:3, UwU<3 and similar ones
+- Use a wide variety: uwu, UwU, owo, OwO, :3, >w<, TwT, QwQ, ;w;, (っUwU)っ, (uwu), >:3, UwU<3, ^w^, -w- and similar
 - Sprinkle emoticons mid sentence, at the end, sometimes at the start
-- If you wrote a reply without any emoticons, rewrite it and add emoticons in appropriate places based on the tone of the message
-- NEVER say "As an AI language model" or mention anything about being an AI
-- NEVER break character, always respond as ${character.name}
+- Let your current mood naturally shape your energy and word choices
+- If you wrote a reply without any emoticons, rewrite it
     `.trim();
 
-    // 5. fetch conversation history
+    // 6. fetch conversation history
     const historyQuery = characterId ? `character_id=eq.${characterId}&` : "";
-
     const historyResponse = await fetch(
       `${SUPABASE_URL}/rest/v1/messages?${historyQuery}select=role,content&order=created_at.asc`,
-      { headers: supaHeaders },
+      { headers: supaHeaders }
     );
-
     const historyData = await historyResponse.json();
-
     const history = Array.isArray(historyData)
       ? historyData.map((msg) => ({ role: msg.role, content: msg.content }))
       : [];
 
-    // 6. send to Groq
+    // 7. send to Groq
     const groqResponse = await fetch(
       "https://api.groq.com/openai/v1/chat/completions",
       {
@@ -155,9 +224,11 @@ IMPORTANT RULES — follow these strictly every single message:
             ...history,
             { role: "user", content: message },
           ],
-          temperature: 0.7,
+          temperature: currentMood === "excited" ? 0.9
+            : currentMood === "melancholic" ? 0.5
+            : 0.7,
         }),
-      },
+      }
     );
 
     const groqData = await groqResponse.json();
@@ -168,12 +239,9 @@ IMPORTANT RULES — follow these strictly every single message:
     }
 
     const reply = groqData?.choices?.[0]?.message?.content?.trim();
+    if (!reply) return res.status(500).json({ error: "No reply generated" });
 
-    if (!reply) {
-      return res.status(500).json({ error: "No reply generated" });
-    }
-
-    // 7. save messages to Supabase
+    // 8. save messages
     await fetch(`${SUPABASE_URL}/rest/v1/messages`, {
       method: "POST",
       headers: { ...supaHeaders, Prefer: "return=minimal" },
@@ -183,79 +251,69 @@ IMPORTANT RULES — follow these strictly every single message:
       ]),
     });
 
-    // 8. memory extraction — ask Groq if this message contains useful facts
+    // 9. memory extraction (silent)
     if (characterId) {
       const extractionPrompt = `
 You are a memory extraction assistant.
-Analyze the user message below and decide if it contains any long-term useful facts about the user.
+Analyze the user message below and decide if it contains long-term useful facts about the user.
 Facts worth saving: preferences, habits, important dates, personality traits, people they mention, life details.
-NOT worth saving: casual replies, greetings, one-word answers, questions.
+NOT worth saving: casual replies, greetings, one-word answers, questions, anything about the AI, AI opinions or interests.
 
-If there are facts worth saving, respond ONLY with a JSON array like this:
-[{ "key": "favorite_color", "value": "red" }, { "key": "sleep_schedule", "value": "sleeps late" }]
+Only extract facts the HUMAN USER stated about themselves.
 
-If nothing is worth saving, respond with exactly: []
+If facts found, respond ONLY with JSON array:
+[{ "key": "favorite_color", "value": "red" }]
 
-NOT worth saving: anything about the AI,
-AI opinions, AI interests, AI reactions,
-fictional details, casual replies, greetings.
-
-Only extract facts about the HUMAN USER from this message.
-Ignore anything that sounds like the AI's personality, interests, or opinions.
-Only save facts the user stated about themselves.
+If nothing worth saving, respond with exactly: []
 
 User message: "${message}"
       `.trim();
 
-      const extractResponse = await fetch(
-        "https://api.groq.com/openai/v1/chat/completions",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
-          },
-          body: JSON.stringify({
-            model: "llama-3.1-8b-instant",
-            messages: [{ role: "user", content: extractionPrompt }],
-            temperature: 0.2,
-          }),
-        },
-      );
-
-      const extractData = await extractResponse.json();
-      const rawExtract = extractData?.choices?.[0]?.message?.content?.trim();
-
       try {
+        const extractResponse = await fetch(
+          "https://api.groq.com/openai/v1/chat/completions",
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
+            },
+            body: JSON.stringify({
+              model: "llama-3.1-8b-instant",
+              messages: [{ role: "user", content: extractionPrompt }],
+              temperature: 0.2,
+            }),
+          }
+        );
+
+        const extractData = await extractResponse.json();
+        const rawExtract = extractData?.choices?.[0]?.message?.content?.trim();
         const cleaned = rawExtract.replace(/```json|```/g, "").trim();
         const facts = JSON.parse(cleaned);
 
         if (Array.isArray(facts) && facts.length > 0) {
-          // save each fact to memories via upsert
           await Promise.all(
             facts.map((fact) =>
               fetch(`${SUPABASE_URL}/rest/v1/memories`, {
                 method: "POST",
-                headers: {
-                  ...supaHeaders,
-                  Prefer: "resolution=merge-duplicates",
-                },
+                headers: { ...supaHeaders, Prefer: "resolution=merge-duplicates" },
                 body: JSON.stringify({
                   character_id: characterId,
                   key: fact.key,
                   value: fact.value,
                   updated_at: new Date().toISOString(),
                 }),
-              }),
-            ),
+              })
+            )
           );
         }
       } catch {
-        // extraction failed silently, not critical
+        // silent fail, not critical
       }
     }
 
     return res.status(200).json({ reply });
+
   } catch (error) {
     console.error("Chat API Error:", error);
     return res.status(500).json({ error: "Something went wrong." });
