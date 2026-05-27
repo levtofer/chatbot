@@ -44,6 +44,30 @@ function addMessage(text, sender) {
   return row;
 }
 
+async function loadHistory() {
+  try {
+    const response = await fetch('/api/history');
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'Failed to load history');
+    }
+
+    messages.innerHTML = '';
+
+    data.messages.forEach((msg) => {
+      addMessage(
+        msg.content,
+        msg.role === 'assistant' ? 'ai' : 'user'
+      );
+    });
+
+  } catch (error) {
+    console.error(error);
+  }
+}
+
 function createTypingIndicator() {
   const row = document.createElement('div');
   row.className = 'message-row ai';
@@ -134,4 +158,5 @@ messageInput.addEventListener('input', () => {
 
 sendButton.disabled = true;
 
+loadHistory();
 scrollToBottom();
